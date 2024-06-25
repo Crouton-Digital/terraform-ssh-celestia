@@ -127,29 +127,75 @@ chmod a+x /tmp/download_bridge_snapshot
 EOT
 
 
+  init_full = <<EOT
+. ~/.bash_profile
+
+cd ~/celestia-node
+./cel-key add my_celes_key --keyring-backend test --node.type full --p2p.network mocha > ~/wallet_info
+
+cd $HOME/celestia-node
+./cel-key list --node.type full --keyring-backend test --p2p.network mocha > ~/fullnode_adress_info
+
+celestia full init --keyring.accname my_celes_key --p2p.network mocha-4
+
+CORE_IP="${var.CORE_IP}"
+CORE_RPC_PORT="${var.CORE_RPC_PORT}"
+CORE_GRPC_PORT="${var.CORE_GRPC_PORT}"
+KEY_NAME="${var.KEY_NAME}"
+
+sudo tee /etc/systemd/system/celestia-full.service > /dev/null <<EOF
+[Unit]
+Description=celestia full
+After=network-online.target
+
+[Service]
+User=$USER
+ExecStart=$(which celestia) full start \
+--core.ip $CORE_IP \
+--core.rpc.port $CORE_RPC_PORT \
+--core.grpc.port $CORE_GRPC_PORT \
+--p2p.network mocha \
+--keyring.accname $KEY_NAME \
+--metrics.tls=true --metrics --metrics.endpoint otel.celestia-mocha.com
+Restart=on-failure
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable celestia-full
+sudo systemctl restart celestia-full
+
+EOT
 
 
 
 
   info = <<EOT
-Please wait download snapshot job use command:
-tail -f -n 50 /tmp/snapshot.log
+Wallet info: cat ~/wallet_info
 
-For read logs: sudo journalctl -u celestia-bridge -f
+For read bridge logs: sudo journalctl -u celestia-bridge -f
+For read full node logs: sudo journalctl -u celestia-full -f
 
 You can find the address by running the following command:
-cd $HOME/celestia-node
-./cel-key list --node.type bridge --keyring-backend test --p2p.network mocha
+  cd $HOME/celestia-node
+  ./cel-key list --node.type bridge --keyring-backend test --p2p.network mocha
 
 Get your node's peerId information:
-NODE_TYPE=bridge
-AUTH_TOKEN=$(celestia $NODE_TYPE auth admin --p2p.network mocha)
+  NODE_TYPE=bridge
+  AUTH_TOKEN=$(celestia $NODE_TYPE auth admin --p2p.network mocha)
 
 curl -X POST \
      -H "Authorization: Bearer $AUTH_TOKEN" \
      -H 'Content-Type: application/json' \
      -d '{"jsonrpc":"2.0","id":0,"method":"p2p.Info","params":[]}' \
      http://localhost:26658
+
+Please wait download snapshot job use command:
+  tail -f -n 50 /tmp/snapshot.log
 
 EOT
 

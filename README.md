@@ -26,7 +26,7 @@ Example how to use module:
 ```yaml
 module "celestia-node" {
   source         = "Crouton-Digital/celestia/ssh"
-  version        = "v0.0.2" # Set last module version
+  version        = "0.0.3" # Set last module version
 
   ssh_host_ip   = "***.***.***.***"
   ssh_host_port = "22"
@@ -55,6 +55,18 @@ $ terraform apply
 
 $ terraform output 
 ```
+
+### Manual restore snapshot for bridge node, when auto download is fail: 
+```bash
+cd $HOME
+SNAP_NAME=$(curl -s https://server-8.itrocket.net/testnet/celestia/.current_state.json | jq -r '.SnapshotName')
+aria2c -x 16 -s 16 -o celestia-bridge-snap.tar.lz4 https://server-8.itrocket.net/testnet/celestia/$SNAP_NAME
+sudo systemctl stop celestia-bridge
+rm -rf ~/.celestia-bridge-mocha-4/{blocks,data,index,inverted_index,transients,.lock}
+tar -I lz4 -xvf ~/celestia-bridge-snap.tar.lz4 -C ~/.celestia-bridge-mocha-4/
+sudo systemctl restart celestia-bridge && sudo journalctl -u celestia-bridge -f
+```
+
 
 Run `terraform destroy` when you don't need these resources.
 
