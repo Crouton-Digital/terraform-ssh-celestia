@@ -1,7 +1,7 @@
 module "celestia-node" {
-  source          = "../../"
-#  source         = "Crouton-Digital/celestia/ssh"
-#  version        = "0.0.2" # Set last module version
+#  source          = "../../"
+  source         = "Crouton-Digital/celestia/ssh"
+  version        = "0.0.4" # Set last module version
 
   ssh_host_ip   = "95.217.177.***"
   ssh_host_port = "22"

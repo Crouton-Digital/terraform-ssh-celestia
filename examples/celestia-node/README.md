@@ -1,4 +1,4 @@
-# terraform-hetzner-celestia
+# terraform-ssh-celestia
 Deploy celestia node on VM
 
 
